@@ -1,13 +1,27 @@
 sudo: required
 language: c
 
+env:
+  global:
+  - GOSS_VERSION=0.3.5
+  - GOSS_PATH=/usr/local/bin/goss
+  master:
+  - docker_repo=kopano
+
 services:
 - docker
 
-script:
-- make build-all
+before_install:
+  - sudo curl -L https://github.com/aelsabbahy/goss/releases/download/v$GOSS_VERSION/goss-linux-amd64 -o /usr/local/bin/goss
+  - sudo curl -L https://github.com/aelsabbahy/goss/releases/download/v$GOSS_VERSION/dgoss -o /usr/local/bin/dgoss
+  - sudo chmod +rx /usr/local/bin/goss
+  - sudo chmod +rx /usr/local/bin/dgoss
 
-#deploy:
-#  script: make publish
-#  on:
-#    branch: master
+install: true
+
+stages:
+- name: build
+  script make build-all
+- name: release
+  if: branch = master
+  script: make publish
