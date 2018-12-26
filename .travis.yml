@@ -5,11 +5,15 @@ env:
   global:
   - GOSS_VERSION=0.3.5
   - GOSS_PATH=/usr/local/bin/goss
-  master:
   - docker_repo=kopano
 
 services:
 - docker
+
+stages:
+  - build
+  - name: release
+    if: branch = master
 
 before_install:
   - sudo curl -L https://github.com/aelsabbahy/goss/releases/download/v$GOSS_VERSION/goss-linux-amd64 -o /usr/local/bin/goss
@@ -19,9 +23,9 @@ before_install:
 
 install: true
 
-stages:
-- name: build
-  script make build-all
-- name: release
-  if: branch = master
-  script: make publish
+jobs:
+  include:
+    - stage: build
+      script: make build-all
+    - stage: release
+      script: make publush
