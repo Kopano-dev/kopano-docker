@@ -20,6 +20,8 @@ before_install:
   - sudo curl -L https://github.com/aelsabbahy/goss/releases/download/v$GOSS_VERSION/dgoss -o /usr/local/bin/dgoss
   - sudo chmod +rx /usr/local/bin/goss
   - sudo chmod +rx /usr/local/bin/dgoss
+  - sudo apt update && sudo apt install -y expect
+  - ./test.exp
 
 install: true
 
