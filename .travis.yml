@@ -3,7 +3,7 @@ language: c
 
 env:
   global:
-  - GOSS_VERSION=0.3.5
+  - GOSS_VERSION=0.3.6
   - GOSS_PATH=/usr/local/bin/goss
   - docker_repo=kopano
 
@@ -23,11 +23,10 @@ before_install:
   - sudo apt update && sudo apt install -y expect
   - ./test.exp
 
-install: true
+install: make build-all
 
-jobs:
-  include:
-    - stage: build
-      script: make build-all
-    - stage: release
-      script: make publush
+deploy:
+  - provider: script
+    script: make publish
+    on:
+      branch: master
