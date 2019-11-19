@@ -4,6 +4,8 @@
 version: "3.5"
 services:
   owncloud:
+    depends_on:
+      - kopano_konnect
     volumes:
       - ./owncloud/99-oidc.sh:/etc/owncloud.d/99-oidc.sh
       - ./owncloud/openidconnect/:/mnt/data/apps/openidconnect/
