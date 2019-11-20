@@ -1,0 +1,45 @@
+# based on
+version: "3.5"
+
+volumes:
+  ocis_files:
+  ocis_redis:
+
+services:
+  ocis:
+    image: cs3org/revad
+    restart: always
+    depends_on:
+      - ocis_redis
+      - ldap
+      - web
+    #environment:
+      #- GRACEFUL=true 
+    volumes:
+      - ocis_files:/mnt/data
+      - ./ocis/reva.toml:/etc/revad/revad.toml:ro
+      - ./ocis/:/go/bin:ro
+    command: ["/go/bin/revad", "-c", "/etc/revad/revad.toml"]
+    networks:
+      - web-net
+      - ocis-net
+      - ldap-net
+
+  ocis_redis:
+    image: webhippie/redis:latest
+    restart: always
+    environment:
+      - REDIS_DATABASES=1
+    healthcheck:
+      test: ["CMD", "/usr/bin/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - ocis_redis:/var/lib/redis
+    networks:
+      - ocis-net
+
+networks:
+  ocis-net:
+    driver: bridge

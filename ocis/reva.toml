@@ -1,0 +1,271 @@
+# This reva.toml config file will start a reva service
+[core]
+max_cpus = "2"
+
+[log]
+level = "debug"
+
+[grpc]
+address = "0.0.0.0:9999"
+enabled_services = [
+    "authprovider",         # provides bearer auth
+    "storageprovider",      # handles storage metadata
+    "usershareprovider",    # provides user shares
+    "userprovider",         # provides user matadata (used to look up email, displayname etc after a login)
+    "preferences",          # provides user preferences
+    "gateway",              # to lookup services and authenticate requests
+    "authregistry",         # used by the gateway to look up auth providers
+    "storageregistry",      # used by the gateway to look up storage providers
+]
+enabled_interceptors = ["auth"]
+
+[grpc.interceptors.auth]
+token_manager = "oidc"
+skip_methods = [
+    # we need to allow calls that happen during authentication
+    "/cs3.gatewayv0alpha.GatewayService/Authenticate",
+    "/cs3.gatewayv0alpha.GatewayService/WhoAmI",
+    "/cs3.gatewayv0alpha.GatewayService/GetUser",
+    "/cs3.gatewayv0alpha.GatewayService/ListAuthProviders",
+    "/cs3.authregistryv0alpha.AuthRegistryService/ListAuthProviders",
+    "/cs3.authregistryv0alpha.AuthRegistryService/GetAuthProvider",
+    "/cs3.authproviderv0alpha.AuthProviderService/Authenticate",
+    "/cs3.userproviderv0alpha.UserProviderService/GetUser",
+]
+
+[grpc.interceptors.auth.token_managers.oidc]
+provider = "https://kopano.demo"
+insecure = true
+audience = "webapp"
+skipcheck = true
+
+[grpc.services.usershareprovider]
+driver = "memory"
+
+[grpc.services.publicshareprovider]
+driver = "memory"
+
+[grpc.services.storageprovider]
+driver = "owncloud"
+# the context path wrapper reads tho username from the context and prefixes the relative storage path with it
+#path_wrapper = "context"
+mount_path = "/"
+mount_id = "123e4567-e89b-12d3-a456-426655440000"
+data_server_url = "https://kopano.demo/data"
+# make the gateway return the storageprovider reported by the storageprovider
+expose_data_server = true
+
+[grpc.services.storageprovider.available_checksums]
+md5   = 100
+unset = 1000
+
+[grpc.services.storageprovider.drivers.owncloud]
+datadirectory = "/var/tmp/reva/data"
+redis = "ocis_redis:6379"
+
+# the authprovider handles bearer auth
+[grpc.services.authprovider]
+auth_manager = "oidc"
+
+[grpc.services.authprovider.auth_managers.oidc]
+provider = "https://kopano.demo"
+insecure = true
+audience = "webapp"
+skipcheck = true
+
+[grpc.services.userprovider]
+driver = "oidc"
+
+[grpc.services.authregistry]
+driver = "static"
+
+[grpc.services.authregistry.drivers.static.rules]
+#basic = "localhost:9999"
+bearer = "localhost:9999"
+
+[grpc.services.storageregistry]
+driver = "static"
+
+[grpc.services.storageregistry.drivers.static.rules]
+"/" = "localhost:9999"
+"123e4567-e89b-12d3-a456-426655440000" = "localhost:9999"
+
+
+[grpc.services.gateway]
+# registries
+authregistrysvc = "localhost:9999"
+storageregistrysvc = "localhost:9999"
+appregistrysvc = "localhost:9999"
+# user metadata
+preferencessvc = "localhost:9999"
+userprovidersvc = "localhost:9999"
+# sharing
+usershareprovidersvc = "localhost:9999"
+publicshareprovidersvc = "localhost:9999"
+ocmshareprovidersvc = "localhost:9999"
+# other
+commit_share_to_storage_grant = true
+datagateway = "https://kopano.demo/data"
+transfer_shared_secret = "replace-me-with-a-transfer-secret"
+transfer_expires = 6 # give it a moment
+token_manager = "oidc"
+
+[grpc.services.gateway.token_managers.oidc]
+provider = "https://kopano.demo"
+insecure = true
+audience = "webapp"
+skipcheck = true
+
+
+
+[http]
+enabled_services = ["ocdav", "ocs"]
+enabled_middlewares = ["cors", "auth", "dataprovider", "prometheus"]
+address = "0.0.0.0:10000"
+
+[http.middlewares.auth]
+gateway = "localhost:9999"
+credential_chain = ["bearer"]
+token_strategy = "bearer"
+token_writer = "noop"
+token_manager = "oidc"
+skip_methods = [
+    "/status.php",
+]
+
+[http.middlewares.auth.token_managers.oidc]
+provider = "https://kopano.demo"
+insecure = true
+audience = "webapp"
+skipcheck = true
+
+[http.middlewares.cors]
+allowed_origins = ["*"]
+allowed_methods = ["OPTIONS", "GET", "PUT", "POST", "DELETE", "MKCOL", "PROPFIND", "PROPPATCH", "MOVE", "COPY", "REPORT", "SEARCH"]
+allowed_headers = ["Origin", "Accept", "Depth", "Content-Type", "X-Requested-With", "Authorization", "Ocs-Apirequest", "If-None-Match"]
+allow_credentials = true
+options_passthrough = false
+
+[http.services.dataprovider]
+driver = "owncloud"
+# TODO why do we not need a %path_wrapper% = context?
+prefix = "data"
+temp_folder = "/var/tmp/"
+
+[http.services.dataprovider.drivers.owncloud]
+datadirectory = "/var/tmp/reva/data"
+redis = "ocis_redis:6379"
+
+[http.services.ocdav]
+# serve ocdav on the root path
+prefix = ""
+chunk_folder = "/var/tmp/revad/chunks"
+# for user lookups
+gateway = "localhost:9999"
+# prefix the path of requests to /dav/files with this namespace
+# While owncloud has only listed usernames at this endpoint CERN has
+# been exposing more than just usernames. For owncloud deployments we
+# can prefix the path to jail the requests to the correct CS3 namespace.
+# In this deployment we mounted the owncloud storage provider at /oc. It
+# expects a username as the first path segment.
+files_namespace = "/"
+# currently, only the desktop client will use this endpoint, but only if
+# the dav.chunking capability is available
+# TODO implement a path wrapper that rewrites `<username>` into the path
+# layout for the users home?
+# no, use GetHome?
+# for eos we need to rewrite the path
+# TODO strip the username from the path so the CS3 namespace can be mounted
+# at the files/<username> endpoint? what about migration? separate reva instance
+
+# similar to the dav/files endpoint we can configure a prefix for the old webdav endpoint
+# we use the old webdav endpoint to present the cs3 namespace
+webdav_namespace = "/"
+# note: this changes the tree that is rendered at remote.php/webdav from the users home to the cs3 namespace
+# use webdav_namespace = "/home" to use the old namespace that only exposes the users files
+# this endpoint should not affect the desktop client sync but will present different folders for the other clients:
+# - the desktop clients use a hardcoded remote.php/dav/files/<username> if the dav.chunkung capability is present
+# - the ios ios uses the core.webdav-root capability which points to remote.php/webdav in oc10
+# - the oc js sdk is hardcoded to the remote.php/webdav so it will see the new tree
+# - TODO android? no sync ... but will see different tree
+
+[http.services.ocs]
+# prefix = "ocs"
+# for user lookups and sharing
+# TODO the data lookup neds to use ldap ...
+# or better yet the kapi ... but how do we lookup users in ldap?
+gateway = "localhost:9999"
+
+
+# options for the /ocs/v1.php/config endpoint
+[http.services.ocs.config]
+version = "1.8"
+website = "reva"
+host = "https://kopano.demo"
+contact = "admin@kopano.demo"
+ssl = "false"
+
+# options for the /ocs/v1.php/cloud/capabilities endpoint
+[http.services.ocs.capabilities.capabilities.core]
+poll_interval = 60
+webdav_root = "remote.php/webdav"
+[http.services.ocs.capabilities.capabilities.core.status]
+installed = true
+maintenance = false
+needsDbUpgrade = false
+version = "10.0.11.5"
+versionstring = "10.0.11"
+edition = "community"
+productname = "reva"
+hostname = ""
+[http.services.ocs.capabilities.capabilities.checksums]
+supported_types = ["SHA256"]
+preferred_upload_type = "SHA256"
+[http.services.ocs.capabilities.capabilities.files]
+private_links = false
+bigfilechunking = false
+blacklisted_files = []
+undelete = true
+versioning = true
+[http.services.ocs.capabilities.capabilities.dav]
+chunking = "1.0"
+[http.services.ocs.capabilities.capabilities.files_sharing]
+api_enabled = true
+resharing = true
+group_sharing = true
+auto_accept_share = true
+share_with_group_members_only = true
+share_with_membership_groups_only = true
+default_permissions = 22
+search_min_length = 3
+[http.services.ocs.capabilities.capabilities.files_sharing.public]
+enabled = true
+send_mail = true
+social_share = true
+upload = true
+multiple = true
+supports_upload_only = true
+[http.services.ocs.capabilities.capabilities.files_sharing.public.password]
+enforced = true
+[http.services.ocs.capabilities.capabilities.files_sharing.public.password.enforced_for]
+read_only = true
+read_write = true
+upload_only = true
+[http.services.ocs.capabilities.capabilities.files_sharing.public.expire_date]
+enabled = true
+[http.services.ocs.capabilities.capabilities.files_sharing.user]
+send_mail = true
+[http.services.ocs.capabilities.capabilities.files_sharing.user_enumeration]
+enabled = true
+group_members_only = true
+[http.services.ocs.capabilities.capabilities.files_sharing.federation]
+outgoing = true
+incoming = true
+[http.services.ocs.capabilities.capabilities.notifications]
+endpoints = ["list", "get", "delete"]
+[http.services.ocs.capabilities.version]
+edition = "reva"
+major = 10
+minor = 0
+micro = 11
+string = "10.0.11"
