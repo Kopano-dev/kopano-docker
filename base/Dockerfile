@@ -50,7 +50,7 @@ RUN apt-get update && \
         curl -s -S -o - "${KOPANO_CORE_REPOSITORY_URL}/Release.key" | apt-key add -; \
     fi
 
-# Create a dummy user and group, the later created kopano user will get the next higher pid
+# Create kopano user and group
 RUN groupadd -r --gid ${KOPANO_GID} kopano
 RUN useradd -r -s /usr/sbin/nologin -d /var/lib/kopano -g ${KOPANO_GID} -u ${KOPANO_UID} kopano
 
