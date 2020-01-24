@@ -42,6 +42,7 @@ done
 
 # Ensure directories exist
 mkdir -p /run/sessions /tmp/webapp
+mkdir -p /var/lib/kopano-webapp/tmp
 
 phpversion=$(dpkg-query --showformat='${Version}' --show php7-mapi)
 echo "Using PHP-Mapi: $phpversion"
@@ -72,6 +73,7 @@ done
 
 echo "Ensure config ownership"
 chown -R www-data:www-data /run/sessions /tmp/webapp
+chown -R www-data:www-data /var/lib/kopano-webapp/tmp
 
 # services need to be aware of the machine-id
 dockerize \
