@@ -8,6 +8,9 @@ ARG KOPANO_CORE_VERSION=newest
 ARG KOPANO_REPOSITORY_FLAGS="trusted=yes"
 ARG RELEASE_KEY_DOWNLOAD=0
 
+ARG KOPANO_UID=1000
+ARG KOPANO_GID=1000
+
 ENV \
     BASE_VERSION=1.3.0 \
     DEBUG="" \
@@ -46,6 +49,10 @@ RUN apt-get update && \
     if [ ${RELEASE_KEY_DOWNLOAD} -eq 1 ]; then \
         curl -s -S -o - "${KOPANO_CORE_REPOSITORY_URL}/Release.key" | apt-key add -; \
     fi
+
+# Create a dummy user and group, the later created kopano user will get the next higher pid
+RUN groupadd -r --gid ${KOPANO_GID} kopano
+RUN useradd -r -s /usr/sbin/nologin -d /var/lib/kopano -g ${KOPANO_GID} -u ${KOPANO_UID} kopano
 
 ENV DOCKERIZE_VERSION v0.11.0
 RUN curl -sfL https://github.com/powerman/dockerize/releases/download/"$DOCKERIZE_VERSION"/dockerize-"$(uname -s)"-"$(uname -m)" \
