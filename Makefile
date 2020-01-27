@@ -29,8 +29,8 @@ KOPANO_WEBAPP_SMIME_REPOSITORY_URL := file:/kopano/repo/smime
 KOPANO_ZPUSH_REPOSITORY_URL := http://repo.z-hub.io/z-push:/final/Debian_9.0/
 RELEASE_KEY_DOWNLOAD := 0
 DOWNLOAD_COMMUNITY_PACKAGES := 1
-KOPANO_UID=1000
-KOPANO_GID=1000
+KOPANO_UID=999
+KOPANO_GID=999
 
 DOCKERCOMPOSE_FILE := docker-compose.yml -f docker-compose.db.yml -f docker-compose.ldap.yml -f docker-compose.mail.yml
 TAG_FILE := build.tags
