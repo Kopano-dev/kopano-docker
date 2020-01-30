@@ -360,7 +360,7 @@ clean:
 
 .PHONY: clean-all-images
 clean-all-images:
-	docker rmi $$(docker images --format '{{.Repository}}:{{.Tag}}' | grep '${docker_repo}/kopano_')
+	docker rmi $$(docker images --format '{{.Repository}}:{{.Tag}}' | grep '${docker_repo}/kopano_') | grep -v '<none>'
 
 .PHONY: clean-all-containers
 clean-all-containers:
