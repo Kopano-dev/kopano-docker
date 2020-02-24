@@ -231,6 +231,14 @@ search)
 		exec /usr/bin/python3 /usr/sbin/kopano-search --config /tmp/kopano/search.cfg -F
 	fi
 	;;
+spamd)
+	dockerize \
+		-wait "$KOPANO_CON" \
+		-timeout 360s
+	# cleaning up env variables
+	unset "${!KCCONF_@}"
+	exec /usr/sbin/kopano-spamd --config /tmp/kopano/spamd.cfg -F
+	;;
 spooler)
 	dockerize \
 		-wait "$KOPANO_CON" \
