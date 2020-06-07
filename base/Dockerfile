@@ -1,3 +1,4 @@
+# syntax = docker/dockerfile:1.0-experimental
 FROM debian:buster
 
 ARG ADDITIONAL_KOPANO_PACKAGES=""
@@ -30,7 +31,8 @@ RUN mkdir -p /kopano/repo /kopano/data /kopano/helper /kopano/path
 WORKDIR /kopano/repo
 
 # install basics
-RUN apt-get update && \
+RUN --mount=type=secret,id=repocred,dst=/etc/apt/auth.conf.d/kopano.conf \
+    apt-get update && \
     apt-get install --no-install-recommends -y \
         apt-transport-https \
         apt-utils \
@@ -47,7 +49,11 @@ RUN apt-get update && \
     rm -rf /var/cache/apt /var/lib/apt/lists/*; \
     # install apt key if supported kopano
     if [ ${RELEASE_KEY_DOWNLOAD} -eq 1 ]; then \
-        curl -s -S -o - "${KOPANO_CORE_REPOSITORY_URL}/Release.key" | apt-key add -; \
+        if [ `cat /etc/apt/auth.conf.d/kopano.conf | awk 'BEGIN { FS="[ ]" } ; { print $5 }'` != "REPLACE-ME" ]; then \
+            curl -u serial:`cat /etc/apt/auth.conf.d/kopano.conf | awk 'BEGIN { FS="[ ]" } ; { print $5 }'` -s -S -o - "${KOPANO_CORE_REPOSITORY_URL}/Release.key" | apt-key add -; \
+        else \
+            curl -s -S -o - "${KOPANO_CORE_REPOSITORY_URL}/Release.key" | apt-key add -; \
+        fi \
     fi
 
 # Create kopano user and group
