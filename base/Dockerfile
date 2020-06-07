@@ -49,8 +49,8 @@ RUN --mount=type=secret,id=repocred,dst=/etc/apt/auth.conf.d/kopano.conf \
     rm -rf /var/cache/apt /var/lib/apt/lists/*; \
     # install apt key if supported kopano
     if [ ${RELEASE_KEY_DOWNLOAD} -eq 1 ]; then \
-        if [ `cat /etc/apt/auth.conf.d/kopano.conf | awk 'BEGIN { FS="[ ]" } ; { print $6 }'` != "REPLACE-ME" ]; then \
-            curl -u serial:`cat /etc/apt/auth.conf.d/kopano.conf | awk 'BEGIN { FS="[ ]" } ; { print $6 }'` -s -S -o - "${KOPANO_CORE_REPOSITORY_URL}/Release.key" | apt-key add -; \
+        if [ "$(awk 'BEGIN { FS="[ ]" } ; { print $6 }' < /etc/apt/auth.conf.d/kopano.conf)" != "REPLACE-ME" ]; then \
+            curl -u serial:$(awk 'BEGIN { FS="[ ]" } ; { print $6 }' < /etc/apt/auth.conf.d/kopano.conf) -s -S -o - "${KOPANO_CORE_REPOSITORY_URL}/Release.key" | apt-key add -; \
         else \
             curl -s -S -o - "${KOPANO_CORE_REPOSITORY_URL}/Release.key" | apt-key add -; \
         fi \
