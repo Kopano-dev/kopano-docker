@@ -31,6 +31,7 @@ RUN mkdir -p /kopano/repo /kopano/data /kopano/helper /kopano/path
 WORKDIR /kopano/repo
 
 # install basics
+# hadolint ignore=SC2215
 RUN --mount=type=secret,id=repocred,target=/etc/apt/auth.conf.d/kopano.conf \
     apt-get update && \
     apt-get install --no-install-recommends -y \
