@@ -31,9 +31,7 @@ RUN mkdir -p /kopano/repo /kopano/data /kopano/helper /kopano/path
 WORKDIR /kopano/repo
 
 # install basics
-# hadolint ignore=SC2215
-RUN --mount=type=secret,id=repocred,target=/etc/apt/auth.conf.d/kopano.conf \
-    apt-get update && \
+RUN apt-get update && \
     apt-get install --no-install-recommends -y \
         apt-transport-https \
         apt-utils \
@@ -47,15 +45,11 @@ RUN --mount=type=secret,id=repocred,target=/etc/apt/auth.conf.d/kopano.conf \
         moreutils \
         python3-minimal \
         && \
-    rm -rf /var/cache/apt /var/lib/apt/lists/*; \
-    # install apt key if supported kopano
-    if [ ${RELEASE_KEY_DOWNLOAD} -eq 1 ]; then \
-        if [ "$(awk 'BEGIN { FS="[ ]" } ; { print $6 }' < /etc/apt/auth.conf.d/kopano.conf)" != "REPLACE-ME" ]; then \
-            curl -u serial:"$(awk 'BEGIN { FS="[ ]" } ; { print $6 }' < /etc/apt/auth.conf.d/kopano.conf)" -s -S -o - "${KOPANO_CORE_REPOSITORY_URL}/Release.key" | apt-key add -; \
-        else \
-            curl -s -S -o - "${KOPANO_CORE_REPOSITORY_URL}/Release.key" | apt-key add -; \
-        fi \
-    fi
+    rm -rf /var/cache/apt /var/lib/apt/lists/*
+
+# hadolint ignore=SC2215
+RUN --mount=type=bind,source=./Release.key,target=/tmp/kopano-release.key \
+    apt-key add /tmp/kopano-release.key
 
 # Create kopano user and group
 RUN groupadd --system --gid ${KOPANO_GID} kopano
