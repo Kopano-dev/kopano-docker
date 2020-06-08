@@ -1,4 +1,3 @@
-# syntax = docker/dockerfile:1.0-experimental
 FROM debian:buster
 
 ARG ADDITIONAL_KOPANO_PACKAGES=""
@@ -47,10 +46,6 @@ RUN apt-get update && \
         && \
     rm -rf /var/cache/apt /var/lib/apt/lists/*
 
-# hadolint ignore=SC2215
-RUN --mount=type=bind,source=./Release.key,target=/tmp/kopano-release.key \
-    apt-key add /tmp/kopano-release.key
-
 # Create kopano user and group
 RUN groupadd --system --gid ${KOPANO_GID} kopano
 RUN useradd --system --shell /usr/sbin/nologin --home /var/lib/kopano --gid ${KOPANO_GID} --uid ${KOPANO_UID} kopano
@@ -74,7 +69,8 @@ RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
 
 # get common utilities
 COPY create-kopano-repo.sh /kopano/helper/
-COPY kcconf.py defaultconfigs/ /kopano/
+COPY kcconf.py Release.key defaultconfigs/ /kopano/
+RUN apt-key add /kopano/Release.key
 
 SHELL [ "/bin/bash", "-c"]
 
