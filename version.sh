@@ -37,11 +37,16 @@ else
 	tmpfile="undefined"
 fi
 
+CURL_AUTH=""
+if [ -e ./apt_auth.conf ]; then
+        CURL_AUTH="-u $(awk '{print $4}' ./apt_auth.conf):$(awk '{print $6}' ./apt_auth.conf)"
+fi
+
 case $component in
 core)
 	KOPANO_CORE_REPOSITORY_URL=${KOPANO_CORE_REPOSITORY_URL:-""}
 	if [[ $KOPANO_CORE_REPOSITORY_URL == http* ]]; then
-		version=$(curl -s -S -L "$KOPANO_CORE_REPOSITORY_URL"/Packages | grep -A2 "Package: kopano-server-packages")
+		version=$(curl $CURL_AUTH -s -S -L "$KOPANO_CORE_REPOSITORY_URL"/Packages | grep -A2 "Package: kopano-server-packages")
 		echo "${version##* }"
 		exit
 	fi
@@ -49,7 +54,7 @@ core)
 webapp)
 	KOPANO_WEBAPP_REPOSITORY_URL=${KOPANO_WEBAPP_REPOSITORY_URL:-""}
 	if [[ $KOPANO_WEBAPP_REPOSITORY_URL == http* ]]; then
-		version=$(curl -s -S -L "$KOPANO_WEBAPP_REPOSITORY_URL"/Packages | grep -m1 -A1 "Package: kopano-webapp")
+		version=$(curl $CURL_AUTH -s -S -L "$KOPANO_WEBAPP_REPOSITORY_URL"/Packages | grep -m1 -A1 "Package: kopano-webapp")
 		echo "${version##* }"
 		exit
 	fi
@@ -57,7 +62,7 @@ webapp)
 zpush)
 	KOPANO_ZPUSH_REPOSITORY_URL=${KOPANO_ZPUSH_REPOSITORY_URL:-"http://repo.z-hub.io/z-push:/final/Debian_9.0/"}
 	if [[ $KOPANO_ZPUSH_REPOSITORY_URL == http* ]]; then
-		version=$(curl -s -S -L "$KOPANO_ZPUSH_REPOSITORY_URL"/Packages | grep -m2 -A2 "Package: z-push-kopano")
+		version=$(curl $CURL_AUTH -s -S -L "$KOPANO_ZPUSH_REPOSITORY_URL"/Packages | grep -m2 -A2 "Package: z-push-kopano")
 		echo "${version##* }"
 		exit
 	fi
@@ -65,7 +70,7 @@ zpush)
 meet)
 	KOPANO_MEET_REPOSITORY_URL=${KOPANO_MEET_REPOSITORY_URL:-""}
 	if [[ $KOPANO_MEET_REPOSITORY_URL == http* ]]; then
-		version=$(curl -s -S -L "$KOPANO_MEET_REPOSITORY_URL"/Packages | grep -A2 "Package: kopano-meet-packages")
+		version=$(curl $CURL_AUTH -s -S -L "$KOPANO_MEET_REPOSITORY_URL"/Packages | grep -A2 "Package: kopano-meet-packages")
 		echo "${version##* }"
 		exit
 	fi
