@@ -6,8 +6,8 @@ import kcconf
 kcconf.configkopano({
     r"/tmp/kopano/spamd.cfg":
     {
-        'log_file': "-",
-        'log_level': "3"
+        # Certain configuration can be pre-defined at startup:
+        #'log_level': "3"
     }
 })
 

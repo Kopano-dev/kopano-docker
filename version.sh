@@ -39,7 +39,7 @@ fi
 
 CURL_AUTH=""
 if [ -e ./apt_auth.conf ]; then
-        CURL_AUTH="-u $(awk '{print $4}' ./apt_auth.conf):$(awk '{print $6}' ./apt_auth.conf)"
+        CURL_AUTH="--netrc-file ./apt_auth.conf"
 fi
 
 case $component in
