@@ -57,7 +57,7 @@ webapp)
 zpush)
 	KOPANO_ZPUSH_REPOSITORY_URL=${KOPANO_ZPUSH_REPOSITORY_URL:-"http://repo.z-hub.io/z-push:/final/Debian_9.0/"}
 	if [[ $KOPANO_ZPUSH_REPOSITORY_URL == http* ]]; then
-		version=$(curl --netrc-file ./apt_auth.conf --netrc-optional -m 1 -s -S -L "$KOPANO_ZPUSH_REPOSITORY_URL"/Packages | grep -m2 -A2 "Package: z-push-kopano")
+		version=$(curl -m 1 -s -S -L "$KOPANO_ZPUSH_REPOSITORY_URL"/Packages | grep -m2 -A2 "Package: z-push-kopano")
 		echo "${version##* }"
 		exit
 	fi
