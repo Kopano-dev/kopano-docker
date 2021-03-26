@@ -40,6 +40,7 @@ services:
     volumes:
       - /etc/machine-id:/etc/machine-id
       - /etc/machine-id:/var/lib/dbus/machine-id
+      - kopanokustomersocket/:/run/kopano-kustomerd/
       - kopanolicenses:/etc/kopano/licenses
       - kopanosocket/:/run/kopano
 
@@ -555,13 +556,14 @@ volumes:
   kdavstates:
   kopanodata:
   kopanograpi:
+  kopanokustomersocket:
   kopanolicenses:
   kopanosocket:
+  kopanospamd:
   kopanossl:
   kopanowebapp:
   web:
   zpushstates:
-  kopanospamd:
 
 networks:
   kopano-net:
